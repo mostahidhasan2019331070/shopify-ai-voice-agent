@@ -1,0 +1,286 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vapi-end-point",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -192,
+        16
+      ],
+      "id": "432b53a9-1b0d-4c84-afe3-8ba1e873cff1",
+      "name": "Webhook",
+      "webhookId": "2a5e5aa9-0df2-4bfb-8b7a-2b5c4473e586"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"results\": [\n    {\n      \"toolCallId\": \"{{ $('Webhook').item.json.body.message.toolCalls[0].id }}\",\n      \"result\": \"{{ $json.output }}\"\n    }\n  ]\n}\n\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        544,
+        16
+      ],
+      "id": "4cdbee05-2df8-42f3-a64b-b12848bc760b",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please give me  details of product title {{ $json.body.message.toolCalls[0].function.arguments['Product title'] }}",
+        "options": {
+          "systemMessage": "=You are a helpful assistant,go to shopify ,if you find product which title is    {{ $json.body.message.toolCalls[0].function.arguments['Product title'] }}.Please give details of it."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -64,
+        752
+      ],
+      "id": "b9127f77-4f6a-44af-a02b-a9f0e707485c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        960
+      ],
+      "id": "0cace51a-1bae-4c13-917f-1dbd53c50c6c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PkwbRtyqbc7yWWE7",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "product",
+        "title": "003",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.shopifyTool",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        640
+      ],
+      "id": "d9d68287-c33e-4b73-b7ab-0d554806f8f3",
+      "name": "Create a product in Shopify",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "oFVoXzqClaDvX7CV",
+          "name": "Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "product",
+        "operation": "getAll",
+        "returnAll": true,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.shopify",
+      "typeVersion": 1,
+      "position": [
+        48,
+        16
+      ],
+      "id": "888f59ff-ac42-4fda-8591-4a259bd92cc6",
+      "name": "Get many products",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "oFVoXzqClaDvX7CV",
+          "name": "Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here are the details for products from my store:\n\nproducts:products: {{ JSON.stringify(\n  $items(\"Get many products\").map(item => ({\n    id: item.json.id,\n    title: item.json.title,\n    handle: item.json.handle,\n    vendor: item.json.vendor,\n    product_type: item.json.product_type,\n    tags: item.json.tags,\n    status: item.json.status,\n    description: item.json.body_html?.replace(/<[^>]+>/g, \"\") || \"\",\n    // 👇 take ALL variants, not just [0]\n    variants: item.json.variants.map(v => ({\n      id: v.id,\n      title: v.title,          \n      price: v.price,\n      sku: v.sku,\n      position: v.position,\n      inventory_quantity : v.inventory_quantity,\n      inventory_policy: v.inventory_policy,\n      option1: v.option1,\n      option2: v.option2,\n      option3: v.option3\n    }))\n  }))\n) }}\n\n1. Please write a details, friendly product description for each item in this list with every information.\n\n2. Do not use any newline characters or “\\n”  or \" \"\\ \" or \" \\\"  \" anywhere in the response.\n\n\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        224,
+        16
+      ],
+      "id": "ac4fc48a-ed42-4d4f-9532-0bccc81f9314",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        624
+      ],
+      "id": "daf167c4-3695-46f4-9b12-09dff3126a81",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PkwbRtyqbc7yWWE7",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        112,
+        224
+      ],
+      "id": "27b2c856-cd03-4d66-be33-4840b10b08a7",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "3tVe4RWF3B33bcvs",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=conversation\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        240
+      ],
+      "id": "29d93cd5-6c99-4876-a613-ca583844f92f",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get many products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a product in Shopify": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Get many products": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f38bcd9b-784d-459d-8af2-dfac9544ae9a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "aa79e255e182d38976dac37900b10e85b0c73dda650c82bff9f3b2a059535d41"
+  },
+  "id": "dg8i6a9MJm83AVUR",
+  "tags": []
+}
