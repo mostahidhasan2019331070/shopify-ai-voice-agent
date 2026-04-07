@@ -1,5 +1,4 @@
-Below is a **clean, professional `README.md`** you can **copy–paste directly** into your GitHub repo
-`shopify-ai-voice-agen`.
+
 
 ---
 
